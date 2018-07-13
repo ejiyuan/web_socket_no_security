@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>socket.html</title>
+    <meta name="keywords" content="keyword1,keyword2,keyword3">
+    <meta name="description" content="this is my page">
+    <meta name="content-type" content="text/html" charset="UTF-8">
+</head>
+<body>
+Welcome
+<label id="userId"></label>
+<br/>
+<textarea id="content" placeholder="消息内容" style="margin: 0px; width: 376px; height: 255px;"></textarea><br/>
+<input id="receiver" placeholder="接收人" type="text"><br/>
+<button onclick="send()">Send</button>
+<button onclick="closeWebSocket()">Close</button>
+<div id="message"></div>
+<!-- 公共JS -->
+<script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+<script type="text/javascript">
+    function getQueryString(name) {
+        var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
+        var r = window.location.search.substr(1).match(reg);
+        if (r != null) return unescape(r[2]);
+        return null;
+    }
+
+    var userId = getQueryString("userId");
+    $("#userId").html(userId);
+    var websocket = null;
+    $(function () {
+        //创建WebSocket
+        connectWebSocket();
+    })
+
+    //强制关闭浏览器  调用websocket.close（）,进行正常关闭
+    window.onunload = function () {
+        //关闭连接
+        closeWebSocket();
+    }
+
+    //建立WebSocket连接
+    function connectWebSocket() {
+        console.log("开始...");
+        //建立webSocket连接
+        websocket = new WebSocket("ws://localhost:8080/websocket/userId=" + userId);
+        //打开webSokcet连接时，回调该函数
+        websocket.onopen = function () {
+            console.log("onpen");
+        }
+
+        //关闭webSocket连接时，回调该函数
+        websocket.onclose = function () {
+            //关闭连接
+            console.log("close");
+        }
+
+        //接收信息
+        websocket.onmessage = function (msg) {
+
+            console.log(msg.data);
+            $("#message").append('<b>' + msg.data + '</b><br/>');
+        }
+        //连接出错
+        websocket.onerror = function (msg) {
+            console.log(msg);
+            $("#message").append('<b>' + msg + '</b><br/>');
+        }
+    }
+
+    //发送消息
+    function send() {
+        var chatMessage = {};
+        chatMessage.sender = userId;                 //我是谁
+        chatMessage.receiver = $("#receiver").val();   //发给谁
+        chatMessage.message = $("#content").val();    //内容是什么
+        websocket.send(JSON.stringify(chatMessage));
+    }
+
+    //关闭连接
+    function closeWebSocket() {
+        if (websocket != null) {
+            websocket.close();
+        }
+    }
+
+</script>
+</body>
